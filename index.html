@@ -1,29 +1,42 @@
-<!DOCTYPE html>
-<html>
+!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>Suraksha Kavach</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Women Safety SOS</title>
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Firebase v8 CDN -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
+
 <body>
 
-  <div class="hero">
-    <img src="images/hero.png" alt="Women Safety">
+  <h1>Women Safety SOS</h1>
+  <p>Emergency me button press karein</p>
 
-    <h1>Suraksha Kavach</h1>
-    <p>
-      A women safety platform that helps you send SOS alerts,
-      share live location, highlight nearby hospitals, police stations
-      and risk zones in emergency situations.
-    </p>
+  <!-- 🔴 SOS BUTTON -->
+  <button class="sos-btn" onclick="sendSOS()">🚨 SOS</button>
 
-    <button onclick="goToMap()">🚨 Open Safety Map</button>
-  </div>
-
+  <!-- Firebase Config -->
   <script>
-    function goToMap() {
-      window.location.href = "map.html";
-    }
+    const firebaseConfig = {
+  apiKey: "AIzaSyDGl6LTztlH6aPSE5S8DQkcdWm3iraE2iM",
+  authDomain: "womensafety-51141.firebaseapp.com",
+  databaseURL: "https://womensafety-51141-default-rtdb.firebaseio.com",
+  projectId: "womensafety-51141",
+  storageBucket: "womensafety-51141.appspot.com",
+  messagingSenderId: "827330618166",
+  appId: "1:827330618166:web:57936502a628880730997"
+};
+    
+
+    firebase.initializeApp(firebaseConfig);
   </script>
+
+  <!-- JS FILE -->
+  <script src="js/sos.js"></script>
 
 </body>
 </html>
