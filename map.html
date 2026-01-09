@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suraksha Kavach</title>
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff0000">
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+  /* General */
+  body, html { margin:0; padding:0; font-family:Arial, sans-serif; height:100%; }
+  button { cursor:pointer; }
+
+  /* Landing Page */
+  #landing {
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    background-color:black; color:white; text-align:center; height:100vh;
+  }
+  #landing .logo {
+    width:180px; height:180px; margin-bottom:20px;
+    background: url('images/logo.png') no-repeat center center;
+    background-size: contain;
+  }
+  #landing h1 { font-size:36px; color:#ff0000; margin-bottom:10px; }
+  #landing p { font-size:18px; max-width:600px; margin-bottom:20px; }
+  #landing .enter-btn { padding:15px 30px; font-size:18px; border:none; border-radius:10px; background-color:red; color:white; transition:0.3s; }
+  #landing .enter-btn:hover { background-color:darkred; }
+
+  /* Map */
+  #map { display:none; height:100vh; width:100%; }
+  #sosBtn {
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    padding:10px 20px; background-color:red; color:white; font-size:18px; border:none; border-radius:8px; z-index:1000; display:none;
+  }
+  #installBtn {
+    position:absolute; top:60px; left:50%; transform:translateX(-50%);
+    padding:10px 20px; font-size:16px; z-index:1000; display:none;
+  }
+</style>
+</head>
+<body>
+
+<!-- Landing Page -->
+<div id="landing">
+  <div class="logo"></div>
+  <h1>Suraksha Kavach</h1>
+  <p>
+    Women Safety App — Real-time location tracking, SOS alerts, hospitals & police highlight, risk zones, and emergency contacts notification system. Stay safe with Suraksha Kavach.
+  </p>
+  <button class="enter-btn" id="enterMapBtn">Enter Map</button>
+</div>
+
+<!-- Map -->
+<div id="map"></div>
+<button id="sosBtn">🚨 SOS</button>
+<button id="installBtn">Install App</button>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+/* =================== PWA Add to Home Screen =================== */
+let deferredPrompt;
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.style.display = 'block';
+});
+
+installBtn.addEventListener('click', () => {
+  installBtn.style.display = 'none';
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+});
+
+/* =================== Landing -> Map =================== */
+const enterMapBtn = document.getElementById('enterMapBtn');
+const landingDiv = document.getElementById('landing');
+const mapDiv = document.getElementById('map');
+const sosBtn = document.getElementById('sosBtn');
+
+let map; // Global map variable
+
+enterMapBtn.addEventListener('click', () => {
+  landingDiv.style.display = 'none';
+  mapDiv.style.display = 'block';
+  sosBtn.style.display = 'block';
+  initMap();
+});
+
+/* =================== Map & Markers =================== */
+function initMap() {
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+
+    map = L.map('map').setView([lat,lng],16);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:"© OpenStreetMap"
+    }).addTo(map);
+
+    // You are here
+    L.marker([lat,lng]).addTo(map).bindPopup("📍 You are here").openPopup();
+
+    // Sample hospitals (red) & police stations (blue)
+    const hospitals = [
+      [lat+0.002, lng+0.002],
+      [lat-0.002, lng-0.003]
+    ];
+    const police = [
+      [lat+0.003, lng-0.001],
+      [lat-0.004, lng+0.002]
+    ];
+
+    hospitals.forEach(loc => {
+      L.circle(loc, {color:'red', fillColor:'red', fillOpacity:0.5, radius:100}).addTo(map)
+        .bindPopup("Hospital");
+    });
+
+    police.forEach(loc => {
+      L.circle(loc, {color:'blue', fillColor:'blue', fillOpacity:0.5, radius:100}).addTo(map)
+        .bindPopup("Police Station");
+    });
+
+  }, () => alert("Location access denied"));
+}
+
+/* =================== SOS Button =================== */
+sosBtn.addEventListener('click', () => {
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+
+    // WhatsApp multiple contacts
+    const numbers = prompt("Enter emergency contacts separated by comma (with country code, e.g., +91XXXXXXXXXX):");
+    if(!numbers) return;
+    const msg = encodeURIComponent(`🚨 SOS! I need help. My location: https://www.google.com/maps?q=${lat},${lng}`);
+    numbers.split(',').forEach(num => {
+      window.open(`https://wa.me/${num.trim()}?text=${msg}`, '_blank');
+    });
+
+    alert("🚨 SOS Sent to all contacts!");
+    // Optional: Add red marker
+    L.marker([lat,lng], {icon:L.icon({iconUrl:'https://maps.google.com/mapfiles/ms/icons/red-dot.png', iconSize:[32,32]})})
+      .addTo(map)
+      .bindPopup("🚨 SOS Sent")
+      .openPopup();
+    map.setView([lat,lng],16);
+  }, () => alert("Location permission denied"));
+});
+
+/* =================== Service Worker =================== */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').then(() => {
+    console.log("Service Worker Registered");
+  });
+}
+</script>
+</body>
+</html>
